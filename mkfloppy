@@ -1,0 +1,52 @@
+#!/bin/bash
+# A simple script to create, mount, unmount, and build floppy disk images.
+# Author: Petr Kratina
+
+showUsageMessage () {
+    echo "Usage:"
+    echo "    $0 create <imagefile>"
+    echo "    $0 mount <imagefile> <mountpoint>"
+    echo "    $0 unmount <mountpoint>"
+    echo "    $0 build <imagefile> <directory>"
+    exit 1
+}
+
+if [ "$#" -lt 2 ]; then
+    showUsageMessage
+fi
+
+if [ "$1" = "create" ]; then
+    if [ "$#" -lt 2 ]; then
+        showUsageMessage
+    fi
+    dd if=/dev/zero of="$2" bs=512 count=2880
+    mkfs.msdos "$2"
+fi
+
+if [ "$1" = "mount" ]; then
+    if [ "$#" -lt 3 ]; then
+        showUsageMessage
+    fi
+    sudo mount -o loop "$2" "$3"
+fi
+
+if [ "$1" = "unmount" ]; then
+    if [ "$#" -lt 2 ]; then
+        showUsageMessage
+    fi
+    sudo umount "$2"
+fi
+
+if [ "$1" = "build" ]; then
+    if [ "$#" -lt 3 ]; then
+        showUsageMessage
+    fi
+    dd if=/dev/zero of="$2" bs=512 count=2880
+    mkfs.msdos "$2"
+    sudo mkdir -p /mnt/mkfloppy$$
+    sudo mount -o loop "$2" /mnt/mkfloppy$$
+    sudo cp -r "$3"/* /mnt/mkfloppy$$/
+    sync
+    sudo umount /mnt/mkfloppy$$
+    sudo rmdir /mnt/mkfloppy$$
+fi
